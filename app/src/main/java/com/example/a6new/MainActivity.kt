@@ -1,6 +1,6 @@
 package com.example.a6new
 
-import android.graphics.drawable.Icon
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,237 +8,122 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.materialIcon
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.a6new.ui.theme._6newTheme
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.fillMaxWidth
 
 class MainActivity : ComponentActivity() {
 
-
-    private val vm: PersonaViewModel by viewModels{
-        viewModelFactory {
-            initializer {
-                val db = BaseDeDatos.BaseDeDatos.getDB(this@MainActivity)
-                PersonaViewModel(db.dao())
-            }
-        }
-    }
     private val vmLibro: LibroViewModel by viewModels {
         viewModelFactory {
             initializer {
-                val db = BaseDeDatos.BaseDeDatos.getDB(this@MainActivity)
-                LibroViewModel(db.libroDao())
+                val db = BaseDeDatosLibros.BasedeDatosLibros.getDB(this@MainActivity)
+                LibroViewModel(db.dao())
             }
         }
     }
 
-
-    override fun onCreate(savedInstanceState: Bundle?){
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PantallaPrincipal(vm = vm)
-        }
-    }
-}
+            var pantallaActual by remember { mutableStateOf("inicio") }
 
-
-
-
-
-@Composable
-fun PantallaPrincipal(vm: PersonaViewModel){
-    val lista by vm.lista.collectAsState(initial = emptyList())
-    var txt_nombre by remember { mutableStateOf("") }
-    var txt_apellido by remember {mutableStateOf("")}
-
-    Column(Modifier.padding(16.dp)) {
-
-        OutlinedTextField(
-            txt_nombre,
-            onValueChange = { txt_nombre = it },
-            label = { Text("Nombre") }
-        )
-
-        OutlinedTextField(
-            value = txt_apellido,
-            onValueChange = { txt_apellido = it },
-            label = { Text("Apellido") }
-        )
-
-        Button(
-            onClick = {
-                vm.insertar(txt_nombre, txt_apellido)
-                txt_nombre = ""
-                txt_apellido = ""
-            }
-        ) {
-            Text("Guardar")
-        }
-
-        Spacer(Modifier.height(10.dp))
-
-        LazyColumn() {
-            items(items = lista) { p -> ItemPersona(p,vm)
-            }
-        }
-
-    }
-}
-
-
-@Composable
-fun ItemPersona(p: Persona, vm: PersonaViewModel){
-    var showDialog by remember { mutableStateOf(false) }
-    var nombre by remember { mutableStateOf(p.nombre) }
-    var apellido by remember { mutableStateOf(p.apellido) }
-
-    Column(Modifier.padding(8.dp)){
-        if(showDialog){
-            AlertDialog(
-                onDismissRequest = {showDialog = false},
-                confirmButton = {
+            Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+                if (pantallaActual != "inicio") {
                     Button(
-                        onClick = {
-                            vm.actualizar(p.copy(nombre= nombre , apellido = apellido))
-                            showDialog = false
-                        }
-                    ) { Text("Guardar")}
-                },
-                dismissButton = {
-                    Button(onClick = {showDialog = false}) {
-                        Text("Cancelar")
-                    }
-                },
-                title = {Text("Editar persona")},
-                text = {
-                    Column() {
-                        OutlinedTextField(
-                            value = nombre,
-                            onValueChange = {nombre = it},
-                            label = {Text("Nombre")}
-                        )
-                        OutlinedTextField(
-                            value = apellido,
-                            onValueChange = {apellido = it},
-                            label = {Text("Apellido")}
-                        )
+                        onClick = { pantallaActual = "inicio" },
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text("Volver")
                     }
                 }
 
-            )
-        }
-
-        Row(modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween)
-        {
-            Text("${p.nombre} ${p.apellido}", modifier = Modifier.weight(1f))
-
-            IconButton(onClick = {showDialog = true}) {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar")
+                when (pantallaActual) {
+                    "inicio" -> PantallaPrincipal(
+                        onAgregar = { pantallaActual = "agregar" },
+                        onListar = { pantallaActual = "listar" }
+                    )
+                    "agregar" -> PantallaLibros(vmLibro)
+                    "listar" -> PantallaListaLibros(vmLibro)
+                }
             }
-
-            IconButton(onClick = {vm.eliminar(p)}) {
-                Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar")
-            }
-
         }
     }
 }
+
+@Composable
+fun PantallaPrincipal(onAgregar: () -> Unit, onListar: () -> Unit) {
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.White),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.logo2),
+            contentDescription = "Logo",
+            modifier = Modifier.size(250.dp)
+        )
+
+        Spacer(modifier = Modifier.height(30.dp))
+
+        Row {
+            Button(onClick = onAgregar) {
+                Text(text = "Agregar libros")
+            }
+            Spacer(modifier = Modifier.width(20.dp))
+
+            Button(onClick = onListar) {
+                Text(text = "Listar libros")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(onClick = { (context as? Activity)?.finish() }) {
+            Text(text = "Salir")
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaLibros(vm: LibroViewModel) {
-    val lista by vm.lista.collectAsState(initial = emptyList())
-
-    var titulo  by remember { mutableStateOf("") }
-    var autor   by remember { mutableStateOf("") }
-    var genero  by remember { mutableStateOf("") }
-
-    val generos   = listOf("Ficción", "Ciencia", "Historia", "Fantasía", "Romance", "Terror")
+    var titulo by remember { mutableStateOf("") }
+    var autor by remember { mutableStateOf("") }
+    var genero by remember { mutableStateOf("") }
+    val generos = listOf("Ficción", "Ciencia", "Historia", "Fantasía", "Romance", "Terror")
     var expandido by remember { mutableStateOf(false) }
     var mostrarError by remember { mutableStateOf(false) }
 
     Column(Modifier.padding(16.dp)) {
+        Text("Nuevo Libro", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Agregar Libro",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        OutlinedTextField(
-            value = titulo,
-            onValueChange = { titulo = it },
-            label = { Text("Título del libro") },
-            isError = mostrarError && titulo.isBlank(),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-            singleLine = true
-        )
-
-        OutlinedTextField(
-            value = autor,
-            onValueChange = { autor = it },
-            label = { Text("Autor") },
-            isError = mostrarError && autor.isBlank(),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-            singleLine = true
-        )
+        OutlinedTextField(value = titulo, onValueChange = { titulo = it }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = autor, onValueChange = { autor = it }, label = { Text("Autor") }, modifier = Modifier.fillMaxWidth())
 
         ExposedDropdownMenuBox(
             expanded = expandido,
             onExpandedChange = { expandido = !expandido },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             OutlinedTextField(
                 value = genero,
@@ -246,57 +131,47 @@ fun PantallaLibros(vm: LibroViewModel) {
                 readOnly = true,
                 label = { Text("Género") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandido) },
-                isError = mostrarError && genero.isBlank(),
                 modifier = Modifier.menuAnchor().fillMaxWidth()
             )
-            ExposedDropdownMenu(
-                expanded = expandido,
-                onDismissRequest = { expandido = false }
-            ) {
+            ExposedDropdownMenu(expanded = expandido, onDismissRequest = { expandido = false }) {
                 generos.forEach { opcion ->
-                    DropdownMenuItem(
-                        text = { Text(opcion) },
-                        onClick = { genero = opcion; expandido = false }
-                    )
+                    DropdownMenuItem(text = { Text(opcion) }, onClick = { genero = opcion; expandido = false })
                 }
             }
         }
 
         if (mostrarError) {
-            Text(
-                text = "Completa todos los campos.",
-                color = Color.Red,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(bottom = 6.dp)
-            )
+            Text("Completa todos los campos", color = Color.Red, fontSize = 12.sp)
         }
 
         Button(
             onClick = {
-                if (titulo.isBlank() || autor.isBlank() || genero.isBlank()) {
-                    mostrarError = true
-                } else {
+                if (titulo.isNotBlank() && autor.isNotBlank() && genero.isNotBlank()) {
                     vm.insertar(titulo, autor, genero)
-                    titulo = ""; autor = ""; genero = ""
-                    mostrarError = false
+                    titulo = ""; autor = ""; genero = ""; mostrarError = false
+                } else {
+                    mostrarError = true
                 }
             },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         ) {
             Text("Guardar Libro")
         }
+    }
+}
 
-        HorizontalDivider(modifier = Modifier.padding(bottom = 12.dp))
+@Composable
+fun PantallaListaLibros(vm: LibroViewModel) {
+    val lista by vm.lista.collectAsState(initial = emptyList())
 
-        Text(
-            text = "Lista de Libros",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+    Column(Modifier.padding(16.dp)) {
+        Text("Libros Registrados", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(items = lista) { libro -> ItemLibro(libro, vm) }
+            items(lista) { libro ->
+                ItemLibro(libro, vm)
+            }
         }
     }
 }
@@ -313,59 +188,13 @@ fun ItemLibro(libro: Libro, vm: LibroViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(libro.titulo, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text("Autor: ${libro.autor}", fontSize = 13.sp, color = Color.DarkGray)
-                Text("Género: ${libro.genero}", fontSize = 12.sp, color = Color.Gray)
+                Text(libro.titulo, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Autor: ${libro.autor}", fontSize = 14.sp, color = Color.DarkGray)
+                Text("Género: ${libro.genero}", fontSize = 13.sp, color = Color.Gray)
             }
             IconButton(onClick = { vm.eliminar(libro) }) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar",
-                    tint = Color.Red
-                )
+                Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.Red)
             }
         }
     }
-}
-@Preview
-@Composable
-fun pantallaPrincipal(){
-    Column(modifier = Modifier.fillMaxSize().background(color = Color.White), horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(
-            painter = painterResource(id = R.drawable.logo)
-            , contentDescription = "Logo",
-            modifier = Modifier.size(width = 400.dp, height = 400.dp)
-        )
-
-        Row() {
-            Button(
-              onClick =  {}
-            ) {
-                Text(text = "Agregar libros")
-            }
-            Spacer(modifier = Modifier.width(20.dp))
-
-            Button(
-                onClick = {}
-            ) {
-                Text(text = "Listar libros")
-            }
-            Spacer(modifier = Modifier.width(20.dp))
-
-
-
-        }
-
-
-        Button(
-            onClick = {},
-
-        ) {
-            //Icon(imageVector = Icons.Default.Close, Color.White)
-            Text(text = "Salir")
-        }
-
-
-    }
-
 }
