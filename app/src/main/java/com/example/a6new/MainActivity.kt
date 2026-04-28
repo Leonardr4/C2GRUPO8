@@ -50,6 +50,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.a6new.ui.theme._6newTheme
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.fillMaxWidth
 
 class MainActivity : ComponentActivity() {
 
@@ -59,6 +69,14 @@ class MainActivity : ComponentActivity() {
             initializer {
                 val db = BaseDeDatos.BaseDeDatos.getDB(this@MainActivity)
                 PersonaViewModel(db.dao())
+            }
+        }
+    }
+    private val vmLibro: LibroViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val db = BaseDeDatos.BaseDeDatos.getDB(this@MainActivity)
+                LibroViewModel(db.libroDao())
             }
         }
     }
@@ -174,6 +192,138 @@ fun ItemPersona(p: Persona, vm: PersonaViewModel){
                 Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar")
             }
 
+        }
+    }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PantallaLibros(vm: LibroViewModel) {
+    val lista by vm.lista.collectAsState(initial = emptyList())
+
+    var titulo  by remember { mutableStateOf("") }
+    var autor   by remember { mutableStateOf("") }
+    var genero  by remember { mutableStateOf("") }
+
+    val generos   = listOf("Ficción", "Ciencia", "Historia", "Fantasía", "Romance", "Terror")
+    var expandido by remember { mutableStateOf(false) }
+    var mostrarError by remember { mutableStateOf(false) }
+
+    Column(Modifier.padding(16.dp)) {
+
+        Text(
+            text = "Agregar Libro",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        OutlinedTextField(
+            value = titulo,
+            onValueChange = { titulo = it },
+            label = { Text("Título del libro") },
+            isError = mostrarError && titulo.isBlank(),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            singleLine = true
+        )
+
+        OutlinedTextField(
+            value = autor,
+            onValueChange = { autor = it },
+            label = { Text("Autor") },
+            isError = mostrarError && autor.isBlank(),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            singleLine = true
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = expandido,
+            onExpandedChange = { expandido = !expandido },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+        ) {
+            OutlinedTextField(
+                value = genero,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Género") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandido) },
+                isError = mostrarError && genero.isBlank(),
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = expandido,
+                onDismissRequest = { expandido = false }
+            ) {
+                generos.forEach { opcion ->
+                    DropdownMenuItem(
+                        text = { Text(opcion) },
+                        onClick = { genero = opcion; expandido = false }
+                    )
+                }
+            }
+        }
+
+        if (mostrarError) {
+            Text(
+                text = "Completa todos los campos.",
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(bottom = 6.dp)
+            )
+        }
+
+        Button(
+            onClick = {
+                if (titulo.isBlank() || autor.isBlank() || genero.isBlank()) {
+                    mostrarError = true
+                } else {
+                    vm.insertar(titulo, autor, genero)
+                    titulo = ""; autor = ""; genero = ""
+                    mostrarError = false
+                }
+            },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        ) {
+            Text("Guardar Libro")
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(bottom = 12.dp))
+
+        Text(
+            text = "Lista de Libros",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(items = lista) { libro -> ItemLibro(libro, vm) }
+        }
+    }
+}
+
+@Composable
+fun ItemLibro(libro: Libro, vm: LibroViewModel) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(libro.titulo, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("Autor: ${libro.autor}", fontSize = 13.sp, color = Color.DarkGray)
+                Text("Género: ${libro.genero}", fontSize = 12.sp, color = Color.Gray)
+            }
+            IconButton(onClick = { vm.eliminar(libro) }) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Eliminar",
+                    tint = Color.Red
+                )
+            }
         }
     }
 }
